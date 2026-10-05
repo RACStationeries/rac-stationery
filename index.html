@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAC Stationery & Gifts - Dindigul</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-blue-900 text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold tracking-wide">RAC Stationery & Gifts</h1>
+        <p class="text-xs text-blue-200">Dindigul (624004) • B2B & Bulk Orders</p>
+      </div>
+      <button onclick="toggleCart()" class="relative bg-blue-800 hover:bg-blue-700 p-2.5 rounded-lg flex items-center gap-2 transition">
+        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+        <span class="hidden sm:inline text-sm font-medium">Quote List</span>
+        <span id="cart-count" class="bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Contact Bar -->
+  <section class="bg-blue-800 text-blue-100 py-3 border-t border-blue-700 text-xs sm:text-sm">
+    <div class="max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center gap-2">
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1"><i data-lucide="phone" class="w-4 h-4"></i> 79040 89224 / 84284 89224</span>
+        <span class="hidden md:flex items-center gap-1"><i data-lucide="mail" class="w-4 h-4"></i> racstationeryshop@gmail.com</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <i data-lucide="map-pin" class="w-4 h-4"></i> Dindigul - 624004
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row gap-4 mb-8 justify-between items-center">
+      <div class="relative w-full md:w-96">
+        <input type="text" id="search-input" oninput="renderProducts()" placeholder="Search stationery, paper, pens..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </main>
+
+  <!-- Cart Modal -->
+  <div id="cart-modal" class="fixed inset-0 z-50 bg-black/50 hidden flex justify-end">
+    <div class="bg-white w-full max-w-md h-full flex flex-col shadow-xl">
+      <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
+        <h2 class="font-bold text-lg flex items-center gap-2">
+          <i data-lucide="shopping-cart" class="w-5 h-5"></i> Bulk Order Quote
+        </h2>
+        <button onclick="toggleCart()" class="text-blue-200 hover:text-white text-xl">✕</button>
+      </div>
+
+      <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+      <div id="cart-footer" class="p-4 border-t bg-slate-50 space-y-3 hidden">
+        <div class="flex justify-between font-bold text-slate-900">
+          <span>Estimated Total:</span>
+          <span id="cart-total">₹0</span>
+        </div>
+        <button onclick="sendWhatsAppOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition">
+          <i data-lucide="send" class="w-5 h-5"></i> Send Quote via WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PRODUCTS = [
+      { id: 1, name: 'A4 Copier Paper (70 GSM)', price: 210, unit: 'Ream', image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400' },
+      { id: 2, name: 'Executive Gel Pens (Blue - Box of 20)', price: 180, unit: 'Box', image: 'https://images.unsplash.com/photo-1585336261026-6757f541a674?w=400' },
+      { id: 3, name: 'Heavy Duty Stapler', price: 350, unit: 'Piece', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400' },
+      { id: 4, name: 'Permanent Markers (4-Pack)', price: 120, unit: 'Pack', image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400' },
+      { id: 5, name: 'Sticky Notes (3x3 Yellow)', price: 45, unit: 'Pad', image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400' },
+      { id: 6, name: 'Spiral Register (200 Pages)', price: 110, unit: 'Piece', image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' }
+    ];
+
+    let cart = [];
+
+    function renderProducts() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = '';
+
+      PRODUCTS.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+        grid.innerHTML += `
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+            <img src="${p.image}" class="h-48 w-full object-cover">
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <h3 class="font-semibold text-slate-900">${p.name}</h3>
+              <div class="mt-4 flex items-center justify-between">
+                <span class="font-bold text-slate-900">₹${p.price} / ${p.unit}</span>
+                <button onclick="addToCart(${p.id})" class="bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-800">Add</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function addToCart(id) {
+      const existing = cart.find(item => item.id === id);
+      if (existing) existing.quantity++;
+      else cart.push({ ...PRODUCTS.find(p => p.id === id), quantity: 1 });
+      updateCartUI();
+    }
+
+    function toggleCart() {
+      document.getElementById('cart-modal').classList.toggle('hidden');
+    }
+
+    function updateCartUI() {
+      const countEl = document.getElementById('cart-count');
+      const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      countEl.innerText = totalCount;
+      countEl.classList.toggle('hidden', totalCount === 0);
+
+      const itemsEl = document.getElementById('cart-items');
+      itemsEl.innerHTML = cart.length === 0 ? '<p class="text-slate-500 text-center py-8">Your quote list is empty.</p>' : '';
+      
+      let totalPrice = 0;
+      cart.forEach(item => {
+        totalPrice += item.price * item.quantity;
+        itemsEl.innerHTML += `
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-medium text-sm">${item.name}</p>
+              <p class="text-xs text-slate-500">₹${item.price} x ${item.quantity}</p>
+            </div>
+            <p class="font-bold text-sm">₹${item.price * item.quantity}</p>
+          </div>
+        `;
+      });
+
+      document.getElementById('cart-total').innerText = '₹' + totalPrice;
+      document.getElementById('cart-footer').classList.toggle('hidden', cart.length === 0);
+      lucide.createIcons();
+    }
+
+    function sendWhatsAppOrder() {
+      let msg = "*Bulk Order Inquiry - RAC Stationery & Gifts*\n\n";
+      let total = 0;
+      cart.forEach(item => {
+        msg += `• ${item.name} - ${item.quantity} ${item.unit}(s) = ₹${item.price * item.quantity}\n`;
+        total += item.price * item.quantity;
+      });
+      msg += `\n*Total Estimate:* ₹${total}\nLocation: Dindigul`;
+      window.open(`https://wa.me/917904089224?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    renderProducts();
+  </script>
+</body>
+</html>
