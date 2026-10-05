@@ -159,8 +159,7 @@
           complete: (results) => {
             products = results.data.map((item, index) => ({
               id: index + 1,
-              name: item["Item Name"] || item["Name"] || "Unnamed Product",
-              category: item["Category"] || "General",
+              name: item["Item Name"] || item["Name"] || "Unnamed Product"
               price: parseFloat(item["Price"] || item["Wholesale Price"] || 0),
               unit: item["Unit"] || "Piece",
               image: item["Image URL"] || "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=300&auto=format&fit=crop&q=60"
