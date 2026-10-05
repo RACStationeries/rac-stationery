@@ -119,35 +119,46 @@
     // Mobile vs Desktop Detection
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    async function loadProductsFromSheet() {
-      const grid = document.getElementById('product-grid');
-      grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500">Updating catalog...</div>';
+  async function loadProductsFromSheet() {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500">Updating catalog...</div>';
 
-      try {
-        const response = await fetch(SHEET_CSV_URL);
-        const text = await response.text();
-        const rows = text.split(/\r?\n/).slice(1);
+  try {
+    const response = await fetch(SHEET_CSV_URL);
+    const csvText = await response.text();
 
-        PRODUCTS = rows.filter(r => r.trim()).map((row, index) => {
-          const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(',');
-          const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+    Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: h => h.trim(),
+      complete: (results) => {
+        PRODUCTS = results.data.map((item, index) => {
+          const rawName = item["Item Name"] || item["Name"] || Object.values(item)[1] || "Stationery Item";
+          const rawPrice = item["Price"] || item["Wholesale Price"] || Object.values(item)[2] || 0;
+          const rawUnit = item["Unit"] || Object.values(item)[3] || "Piece";
+          const rawImage = item["Image URL"] || Object.values(item)[4] || 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400';
 
           return {
-            id: parseInt(cleanCols[0]) || index + 1,
-            name: cleanCols[1] || 'Stationery Item',
-            price: parseFloat(cleanCols[2]) || 0,
-            unit: cleanCols[3] || 'Piece',
-            image: cleanCols[4] || 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400'
+            id: parseInt(item["ID"] || index + 1),
+            name: String(rawName).trim(),
+            price: parseFloat(rawPrice) || 0,
+            unit: String(rawUnit).trim(),
+            image: String(rawImage).trim()
           };
         });
 
         renderProducts();
-      } catch (err) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Failed to load catalog. Please verify your Google Sheet.</div>';
-        console.error(err);
       }
-    }
-
+    });
+  } catch (err) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-rose-500">
+        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+        <p>Failed to load product catalog. Please verify Google Sheet permissions.</p>
+      </div>
+    `;
+  }
+}
     function renderProducts() {
       const query = document.getElementById('search-input').value.toLowerCase();
       const grid = document.getElementById('product-grid');
