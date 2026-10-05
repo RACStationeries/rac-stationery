@@ -325,6 +325,17 @@
     }
 
     loadProductsFromSheet();
+    <style>
+  /* Keeps the submit button clearly above any Netlify badge/drawer overlay */
+  #cart-modal {
+    z-index: 99999 !important;
+  }
+  
+  /* Adds safe margin to modal content for mobile screens */
+  #cart-modal .modal-body {
+    padding-bottom: 5rem !important;
+  }
+</style>
   </script>
 </body>
 </html>
