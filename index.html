@@ -133,17 +133,22 @@
       transformHeader: h => h.trim(),
       complete: (results) => {
         PRODUCTS = results.data.map((item, index) => {
-          const rawName = item["Item Name"] || item["Name"] || Object.values(item)[1] || "Stationery Item";
-          const rawPrice = item["Price"] || item["Wholesale Price"] || Object.values(item)[2] || 0;
-          const rawUnit = item["Unit"] || Object.values(item)[3] || "Piece";
-          const rawImage = item["Image URL"] || Object.values(item)[4] || 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400';
+          const rawId    = item["id"] || item["ID"] || Object.values(item)[0];
+  const rawName  = item["name"] || item["Name"] || item["Item Name"] || item["Product Name"] || Object.values(item)[1] || "Stationery Item";
+  const rawPrice = item["price"] || item["Price"] || item["Wholesale Price"] || item["Rate"] || Object.values(item)[2] || 0;
+  const rawUnit  = item["unit"] || item["Unit"] || item["UOM"] || Object.values(item)[3] || "Piece";
+  const rawImage = item["image"] || item["Image"] || item["Image URL"] || item["Photo"] || Object.values(item)[4];
 
-          return {
-            id: parseInt(item["ID"] || index + 1),
-            name: String(rawName).trim(),
-            price: parseFloat(rawPrice) || 0,
-            unit: String(rawUnit).trim(),
-            image: String(rawImage).trim()
+  const defaultImg = 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400';
+
+  return {
+    id: parseInt(rawId) || index + 1,
+    name: String(rawName).trim(),
+    price: parseFloat(rawPrice) || 0,
+    unit: String(rawUnit).trim(),
+    image: rawImage && String(rawImage).trim().startsWith('http') 
+      ? String(rawImage).trim() 
+      : defaultImg
           };
         });
 
