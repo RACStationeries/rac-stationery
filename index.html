@@ -43,10 +43,15 @@
       <div class="relative w-full md:w-96">
         <input type="text" id="search-input" oninput="renderProducts()" placeholder="Search stationery, paper, pens..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
       </div>
+      <button onclick="loadProductsFromSheet()" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-lg flex items-center gap-1 text-slate-700">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Catalog
+      </button>
     </div>
 
     <!-- Product Grid -->
-    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="col-span-full text-center py-12 text-slate-500">Loading catalog from Google Sheets...</div>
+    </div>
   </main>
 
   <!-- Cart Modal -->
@@ -74,26 +79,56 @@
   </div>
 
   <script>
-    const PRODUCTS = [
-      { id: 1, name: 'A4 Copier Paper (70 GSM)', price: 210, unit: 'Ream', image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400' },
-      { id: 2, name: 'Executive Gel Pens (Blue - Box of 20)', price: 180, unit: 'Box', image: 'https://images.unsplash.com/photo-1585336261026-6757f541a674?w=400' },
-      { id: 3, name: 'Heavy Duty Stapler', price: 350, unit: 'Piece', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400' },
-      { id: 4, name: 'Permanent Markers (4-Pack)', price: 120, unit: 'Pack', image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400' },
-      { id: 5, name: 'Sticky Notes (3x3 Yellow)', price: 45, unit: 'Pad', image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400' },
-      { id: 6, name: 'Spiral Register (200 Pages)', price: 110, unit: 'Piece', image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' }
-    ];
+    // Paste your published Google Sheets CSV Link below:
+    const SHEET_CSV_URL = "PASTE_YOUR_GOOGLE_SHEET_CSV_URL_HERE";
 
+    let PRODUCTS = [];
     let cart = [];
+
+    async function loadProductsFromSheet() {
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500">Updating catalog...</div>';
+
+      try {
+        const response = await fetch(SHEET_CSV_URL);
+        const text = await response.text();
+        const rows = text.split('\n').slice(1); // Skip header row
+
+        PRODUCTS = rows.filter(r => r.trim()).map((row, index) => {
+          // Parse CSV cells cleanly
+          const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+          return {
+            id: parseInt(cols[0]) || index + 1,
+            name: cols[1] || 'Stationery Item',
+            price: parseFloat(cols[2]) || 0,
+            unit: cols[3] || 'Piece',
+            image: cols[4] || 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400'
+          };
+        });
+
+        renderProducts();
+      } catch (err) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Failed to load catalog. Please verify your Google Sheets CSV link.</div>';
+        console.error(err);
+      }
+    }
 
     function renderProducts() {
       const query = document.getElementById('search-input').value.toLowerCase();
       const grid = document.getElementById('product-grid');
       grid.innerHTML = '';
 
-      PRODUCTS.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+      const filtered = PRODUCTS.filter(p => p.name.toLowerCase().includes(query));
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500">No matching items found.</div>';
+        return;
+      }
+
+      filtered.forEach(p => {
         grid.innerHTML += `
           <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
-            <img src="${p.image}" class="h-48 w-full object-cover">
+            <img src="${p.image}" class="h-48 w-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400'">
             <div class="p-4 flex-1 flex flex-col justify-between">
               <h3 class="font-semibold text-slate-900">${p.name}</h3>
               <div class="mt-4 flex items-center justify-between">
@@ -157,7 +192,7 @@
       window.open(`https://wa.me/917904089224?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    renderProducts();
+    loadProductsFromSheet();
   </script>
 </body>
 </html>
